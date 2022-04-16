@@ -41,7 +41,38 @@ async function getRestaurant(req, res) {
 
 
 async function updateRestaurants(req, res) {
-    res.status(201).send({ message: 'successfully updated' })
+    let result = await formValidator('restaurant', req.body)
+    if (result.length > 0) {
+        res.status(400).send({ error: result })
+    }
+    else{
+        if (!await isUnique("SELECT COUNT(name) FROM restaurants WHERE name=$1", [req.body.name])) {
+            res.status(400).send({ error: 'Restaurant name already exists' })
+        }
+        else{
+            try {
+                const results = await db.query("UPDATE restaurants Set name=$1, location=$2, price_range=$3 WHERE id =$4", [
+                    req.body.name,
+                    req.body.location,
+                    req.body.price_range,
+                    req.params.id
+                ])
+                
+                let data = {
+                    status: true,
+                    message: `updated restaurant`,
+                    data: req.body,
+                    length: results.rows.length
+                }
+    
+                res.status(201).send(data)
+            }
+            catch (err) {
+                console.log(err)
+                res.status(500).send({ message: "Something went wrong from the server side" })
+            }
+        }
+    }
 }
 
 async function createRestaurants(req, res) {
@@ -52,7 +83,7 @@ async function createRestaurants(req, res) {
     else {
         //check if unique
         if (!await isUnique("SELECT COUNT(name) FROM restaurants WHERE name=$1", [req.body.name,])) {
-            res.status(400).send({ error: 'Restaurant already exists' })
+            res.status(400).send({ error: 'Restaurant name already exists' })
         }
         else {
             try {
