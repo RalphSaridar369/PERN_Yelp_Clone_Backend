@@ -1,7 +1,6 @@
 const db = require('../db');
 const { formValidator } = require('../helpers/validator');
-
-
+const {isUnique} = require('../helpers/checkUnique') 
 
 
 
@@ -52,11 +51,7 @@ async function createRestaurants(req, res) {
     }
     else {
         //check if unique
-        const check = await db.query("SELECT COUNT(name) FROM restaurants WHERE name=$1", [
-            req.body.name
-        ])
-        console.log("CHECK, ",check)
-        if (check.rows[0].count == '1') {
+        if (!await isUnique("SELECT COUNT(name) FROM restaurants WHERE name=$1", [req.body.name,])) {
             res.status(400).send({ error: 'Restaurant already exists' })
         }
         else {
