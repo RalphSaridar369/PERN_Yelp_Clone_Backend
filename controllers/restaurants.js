@@ -115,7 +115,33 @@ async function createRestaurants(req, res) {
 
 
 async function deleteRestaurants(req, res) {
-    res.status(201).send({ message: 'successfully deleted' })
+    try{
+        await db.query('DELETE FROM restaurants WHERE id=$1',[req.params.id]);
+        res.status(201).send({message:"Restaurant deleted successfully"})
+
+    }
+    catch(err){
+        console.log("error while deleting:",err);
+        res.status(500).send({ message: "Something went wrong from the server side" });
+    }
+}
+
+async function addReview(req,res){
+    try {
+      const newReview = await db.query(
+        "INSERT INTO reviews (restaurant_id, name, review, rating) values ($1, $2, $3, $4) returning *;",
+        [req.params.id, req.body.name, req.body.review, req.body.rating]
+      );
+      console.log(newReview);
+      res.status(201).json({
+        status: "success",
+        data: {
+          review: newReview.rows[0],
+        },
+      });
+    } catch (err) {
+      console.log(err);
+    }
 }
 
 module.exports = {
@@ -123,5 +149,6 @@ module.exports = {
     getRestaurant,
     updateRestaurants,
     createRestaurants,
-    deleteRestaurants
+    deleteRestaurants,
+    addReview
 }
